@@ -45,7 +45,6 @@ namespace MultiWatcher.Code
         private readonly string loginInputSelector = "input[autocomplete=username]";
         private readonly string passwordInputSelector = "input[autocomplete=current-password]";
         private readonly string submitInputSelector = "button[data-a-target=passport-login-button]";
-        private readonly string signinError = "div.subwindow_notice";
         private readonly string continueButtonSelector = @"body > div.ReactModalPortal > div > div > div > div.tw-c-background.tw-flex.tw-flex-column.tw-pd-x-2.tw-pd-y-3 > div.tw-mg-t-2 > div > button";
 
         private readonly string reCaptchaFrameSelector = "#recaptcha-element-container > div > div > iframe";
@@ -543,14 +542,6 @@ namespace MultiWatcher.Code
             {
                 State = WatcherState.AUTHORIZINGFAILED;
                 WriteLog("Can't Click On Submit");
-                return;
-            }
-
-            bool hasError = await WaitSelector(signinError, 3);
-            if (hasError)
-            {
-                State = WatcherState.AUTHORIZINGFAILED;
-                WriteLog("Autorization Error (message)");
                 return;
             }
 

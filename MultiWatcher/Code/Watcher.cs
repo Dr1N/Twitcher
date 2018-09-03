@@ -4,11 +4,9 @@ using MultiWatcher.Interfaces;
 using MultiWatcher.Utils;
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Windows.Media.Imaging;
 
 namespace MultiWatcher.Code
@@ -52,6 +50,7 @@ namespace MultiWatcher.Code
 
         private readonly string reCaptchaFrameSelector = "#recaptcha-element-container > div > div > iframe";
         private readonly string reCaptchaResponse = "textarea#g-recaptcha-response";
+        private readonly string reCaptchaCheckBox = "#recaptcha-anchor";
 
         /*
         private readonly string bigPlaySelector = "button.player-button-play";
@@ -409,7 +408,7 @@ namespace MultiWatcher.Code
 
         #region Public
 
-        public async void TwitchAuthorization()
+        public async Task TwitchAuthorization()
         {
             try
             {
@@ -547,6 +546,14 @@ namespace MultiWatcher.Code
                 return;
             }
 
+            bool hasError = await WaitSelector(signinError, 3);
+            if (hasError)
+            {
+                State = WatcherState.AUTHORIZINGFAILED;
+                WriteLog("Autorization Error (message)");
+                return;
+            }
+
             success = await WaitSelector(continueButtonSelector);
             if (!success)
             {
@@ -570,24 +577,10 @@ namespace MultiWatcher.Code
 
             await Task.Delay(1000);
 
-            string removeDisabledAttr = $"document.querySelector('{continueButtonSelector}').removeAttribute('disabled')";
-            success = success && EvaluateScript(removeDisabledAttr);
-            string removeDisabledClass = $"document.querySelector('{continueButtonSelector}').classList.remove('tw-button--disabled')";
-            success = success && EvaluateScript(removeDisabledClass);
-            string focusScript = $"document.querySelector('{continueButtonSelector}').focus()";
-            await Task.Delay(500);
-            threadRunner.Send(() => { webView.SendKeyEvent(true, KeyCode.Enter); });
+            success = await Continue(success);
 
             await Task.Delay(1000);
-
-            //bool hasError = await WaitSelector(signinError, 3);
-            //if (hasError)
-            //{
-            //    State = WatcherState.AUTHORIZINGFAILED;
-            //    WriteLog("Autorization Error (message)");
-            //    return;
-            //}
-
+           
             CurrentUrl = TwitchUrl;
 
             success = await CheckAutorization();
@@ -606,6 +599,24 @@ namespace MultiWatcher.Code
             await FindAndClickButton(matureSelector);
 
             State = WatcherState.WATCHING;
+        }
+
+        private async Task<bool> Continue(bool success)
+        {
+            string fameNameScript = $"document.querySelector('{reCaptchaFrameSelector}').name";
+            success = EvaluateScriptWithResult(fameNameScript, out string frameName);
+
+            //TODO Not Work
+            string removeDisabledAttr = $"document.querySelector('{continueButtonSelector}').removeAttribute('disabled')";
+            success = success && EvaluateScript(removeDisabledAttr);
+            string removeDisabledClass = $"document.querySelector('{continueButtonSelector}').classList.remove('tw-button--disabled')";
+            success = success && EvaluateScript(removeDisabledClass);
+
+            string focusScript = $"document.querySelector('{continueButtonSelector}').focus()";
+            await Task.Delay(500);
+            threadRunner.Send(() => { webView.SendKeyEvent(true, KeyCode.Enter); });
+
+            return success;
         }
 
         private async Task<bool> FillLoginForm()
@@ -636,7 +647,7 @@ namespace MultiWatcher.Code
                     var focusScr = $"document.querySelector('{loginInputSelector}').focus()";
                     EvaluateScript(focusScr);
                     await Task.Delay(500);
-                    System.Windows.Application.Current.Dispatcher.Invoke(() => { System.Windows.Clipboard.SetText(login); });
+                    await SetToClipboard(login);
                     await Task.Delay(1000);
                     threadRunner.Send(() => { webView.SendKeyEvent(true, KeyCode.A, EventFlags.ControlDown); });
                     await Task.Delay(1000);
@@ -647,7 +658,7 @@ namespace MultiWatcher.Code
                     focusScr = $"document.querySelector('{passwordInputSelector}').focus()";
                     EvaluateScript(focusScr);
                     await Task.Delay(500);
-                    System.Windows.Application.Current.Dispatcher.Invoke(() => { System.Windows.Clipboard.SetText(password); });
+                    await SetToClipboard(password);
                     await Task.Delay(1000);
                     threadRunner.Send(() => { webView.SendKeyEvent(true, KeyCode.V, EventFlags.ControlDown); });
                     await Task.Delay(1000);
@@ -661,6 +672,26 @@ namespace MultiWatcher.Code
             }
 
             return success;
+        }
+
+        private async Task SetToClipboard(string message)
+        {
+            await System.Windows.Application.Current.Dispatcher.Invoke(async () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    try
+                    {
+                        System.Windows.Clipboard.SetText(message);
+                        break;
+                    }
+                    catch
+                    {
+                        await Task.Delay(20);
+                        continue;
+                    }
+                }
+            });
         }
 
         private bool SubmitForm()

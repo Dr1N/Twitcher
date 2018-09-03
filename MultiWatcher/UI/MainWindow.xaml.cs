@@ -141,6 +141,7 @@ namespace MultiWatcher
                 string filename = openFileDialog.FileName;
                 var success = await manager.ReadUsersFromFileAsync(filename);
                 InitNewSessionGui(filename, success);
+                EnablePreview.IsChecked = false;
             }
         }
 

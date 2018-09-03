@@ -1,0 +1,27 @@
+﻿<Window x:Class="MultiWatcher.Overlay"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MultiWatcher"
+        mc:Ignorable="d" 
+        Height="100" Width="200" 
+        ResizeMode="NoResize" 
+        WindowStartupLocation="CenterOwner" 
+        WindowStyle="None" ShowInTaskbar="False"
+        BorderBrush="Blue" BorderThickness="1">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="3*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" x:Name="MessageTextBox" Text="Message"
+                   VerticalAlignment="Center" HorizontalAlignment="Center"
+                   FontSize="24"/>
+        <ProgressBar Grid.Row="1" x:Name="ProgressBar"
+                     Minimum="0" Maximum="100"
+                     VerticalAlignment="Center" HorizontalAlignment="Center"
+                     Width="150" Height="10" IsIndeterminate="True" IsHitTestVisible="False" IsTabStop="False"/>
+
+    </Grid>
+</Window>

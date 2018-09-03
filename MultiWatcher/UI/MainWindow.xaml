@@ -1,0 +1,245 @@
+﻿<Window x:Class="MultiWatcher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        mc:Ignorable="d"
+        Title="Twitch Watcher" 
+        Width="950" Height="600"
+        MinWidth="850" MinHeight="400"
+        SnapsToDevicePixels="True">
+    
+    <Grid x:Name="MainGrid">
+        <TabControl x:Name="mainTabControl">
+            <TabItem x:Name="MainTabItem" Header="Settings and Start">
+                <DockPanel LastChildFill="True">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Height="30" Margin="5,0,5,0">
+                        <Button x:Name="SelectFileButton" Content="New..." 
+                                Margin="3" ToolTip="Select user data file"
+                                FontSize="8" FontWeight="Bold"
+                                Click="SelectFileButton_Click"/>
+                        <Button x:Name="LoadFileButton" Content="Load..."
+                                FontSize="8" FontWeight="Bold"
+                                Margin="3" ToolTip="Load session"
+                                Click="LoadFileButton_Click"/>
+                        <Button x:Name="SaveButton" Content="Save..." 
+                                Margin="3" Padding="3,0" IsEnabled="False"
+                                FontSize="8" FontWeight="Bold"
+                                Click="SaveButton_Click"/>
+                        <Border x:Name="FileBorder" BorderThickness="1" BorderBrush="Gray" Visibility="Collapsed"
+                                Margin="5" Padding="5,0,0,0">
+                        <TextBlock x:Name="SelectedFile" 
+                                   Text="File" VerticalAlignment="Center"
+                                   Width="300"/>
+                        </Border>
+                        <StackPanel x:Name="NewSessionPanel" Orientation="Horizontal" Visibility="Collapsed">
+                            <Label Content="Start:" VerticalContentAlignment="Center"/>
+                            <xctk:IntegerUpDown x:Name="StartPosition" Margin="5" Width="50"/>
+                            <Label Content="End:" VerticalContentAlignment="Center"/>
+                            <xctk:IntegerUpDown x:Name="EndPosition" Margin="5" Width="50"/>
+                            <TextBlock Text="Url: " VerticalAlignment="Center"/>
+                            <TextBox x:Name="TargetUrl" Text="http://www.twitch.tv/joshog"
+                                     Width="200" Margin="5" 
+                                     VerticalContentAlignment="Center" FontWeight="Bold"/>
+                            <Button x:Name="StartButton" Content="Start" Margin="3" 
+                                    Padding="3,0" IsEnabled="False"
+                                    FontSize="8" FontWeight="Bold"
+                                    Click="StartButton_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StatusBar DockPanel.Dock="Bottom" Height="25">
+                        <StackPanel x:Name="StatusUsers" Orientation="Horizontal" Visibility="Collapsed">
+                            <TextBlock Text="Users: "/>
+                            <TextBlock x:Name="StatusUserCount" Text="0" FontWeight="Bold" Width="20"/>
+                        </StackPanel>
+                        <StackPanel x:Name="StatusWatchers" Orientation="Horizontal" Visibility="Collapsed">
+                            <TextBlock Text="Watchers: "/>
+                            <TextBlock x:Name="StatusWatchersCount" Text="0" Width="20" FontWeight="Bold"/>
+                        </StackPanel>
+                        <StackPanel x:Name="StatusTarget" Orientation="Horizontal" Visibility="Collapsed">
+                            <TextBlock Text="Target Url: "/>
+                            <TextBlock x:Name="StatusMainUrl" FontWeight="Bold"/>
+                        </StackPanel>
+                    </StatusBar>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="2"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <ListView Grid.Row="0" x:Name="WatcherList" 
+                                  Margin="3" SelectionMode="Single"
+                                  MouseDoubleClick="WatcherList_MouseDoubleClick">
+                            <ListView.Resources>
+                                <ContextMenu x:Key="ItemContextMenu">
+                                    <MenuItem x:Name="Authorization" Header="Authorization" 
+                                              Click="Authorization_Click"/>
+                                    <MenuItem x:Name="MenuUrl" Header="Url..."
+                                              Click="MenuUrl_Click"/>
+                                    <MenuItem x:Name="MenuAllUr" Header="All Url..."
+                                              Click="MenuAllUrl_Click"/>
+                                    <Separator/>
+                                    <MenuItem x:Name="MenuRemove" Header="Delete"
+                                              Click="MenuRemove_Click"/>
+                                </ContextMenu>
+                            </ListView.Resources>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="{x:Type ListViewItem}" >
+                                    <Setter Property="ContextMenu" Value="{StaticResource ItemContextMenu}" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Id" Width="100" DisplayMemberBinding="{Binding ShortID, IsAsync=True}"/>
+                                    <GridViewColumn Header="Login" Width="150" DisplayMemberBinding="{Binding Login, IsAsync=True}"/>
+                                    <GridViewColumn Header="Authorized" Width="100" DisplayMemberBinding="{Binding IsAuthorized, IsAsync=True}"/>
+                                    <GridViewColumn Header="Url" Width="400" DisplayMemberBinding="{Binding CurrentUrl, IsAsync=True}"/>
+                                    <GridViewColumn Header="Status" Width="100" DisplayMemberBinding="{Binding State, IsAsync=True}"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                        <Grid Grid.Row="2" x:Name="BottomGrid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="2"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" BorderThickness="1" BorderBrush="Gray" Margin="5,5,2.5,5" Padding="2">
+                                <TextBox x:Name="WatchLog" 
+                                         Padding="10,0,0,0" Margin="3"
+                                         IsReadOnly="True" TextWrapping="Wrap"
+                                         MaxLines="1000" VerticalScrollBarVisibility="Auto"/>
+                            </Border>
+                            <GridSplitter Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                            <Border Grid.Column="2" BorderThickness="1" BorderBrush="Gray" Margin="5,5,2.5,5" Padding="2">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="20"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                        <CheckBox x:Name="EnablePreview" 
+                                                  Content="Show Preview" VerticalAlignment="Center"
+                                                  ToolTip="Show Selected Watcher Preview" 
+                                                  IsEnabled="False" Margin="0,0,10,0"
+                                                  Checked="EnablePreview_Checked"
+                                                  Unchecked="EnablePreview_Unchecked"/>
+                                        <RadioButton x:Name="RadioUniform" Content="Uniform"
+                                                     VerticalAlignment="Center" Margin="0,0,10,0"
+                                                     IsChecked="True"
+                                                     IsEnabled="{Binding ElementName=EnablePreview, Path=IsChecked}"
+                                                     Checked="RadioStretch_Checked"/>
+                                        <RadioButton x:Name="RadioFill" Content="Fill"
+                                                     VerticalAlignment="Center" Margin="0,0,10,0"
+                                                     IsEnabled="{Binding ElementName=EnablePreview, Path=IsChecked}"
+                                                     Checked="RadioStretch_Checked" Visibility="Collapsed"/>
+                                        <RadioButton x:Name="RadioUniformToFill" Content="UniformToFill"
+                                                     VerticalAlignment="Center" Margin="0,0,10,0"
+                                                     IsEnabled="{Binding ElementName=EnablePreview, Path=IsChecked}"
+                                                     Checked="RadioStretch_Checked"/>
+                                        <RadioButton x:Name="RadioNone" Content="None" Visibility="Collapsed"
+                                                     VerticalAlignment="Center" Margin="0,0,10,0"
+                                                     IsEnabled="{Binding ElementName=EnablePreview, Path=IsChecked}"
+                                                     Checked="RadioStretch_Checked"/>
+                                    </StackPanel>
+                                    <Image Grid.Row="1" x:Name="Preview" 
+                                        Stretch="Uniform"
+                                        HorizontalAlignment="Stretch" 
+                                        VerticalAlignment="Stretch"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </DockPanel>
+            </TabItem>
+            <TabItem x:Name="OptionsTabItem" Header="Options"
+                     Visibility="Visible" IsEnabled="False">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <GroupBox Grid.Row="0" Grid.Column="0"
+                              Header="Main"
+                              BorderThickness="1" BorderBrush="Gray"
+                              Margin="5" Padding="5">
+                        <StackPanel>
+                            <CheckBox x:Name="LogsCheckBox"
+                                      Content="Print Logs"
+                                      IsChecked="True"
+                                      IsEnabled="False"
+                                      Margin="5,5,0,5"/>
+                            <CheckBox x:Name="MuteCheckBox"
+                                      Content="Mute On Load"
+                                      IsChecked="False"
+                                      IsEnabled="False"
+                                      Margin="5,5,0,5"/>
+                            <CheckBox x:Name="PauseCheckBox"
+                                      Content="Pause On Load"
+                                      IsChecked="False"
+                                      IsEnabled="False"
+                                      Margin="5,5,0,5"/>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Grid.Row="0" Grid.Column="1"
+                              HorizontalAlignment="Stretch" 
+                              VerticalAlignment="Stretch"
+                              Header="Captcha"
+                              BorderThickness="1" 
+                              BorderBrush="Gray"
+                              Padding="5" Margin="5">
+                        <StackPanel Orientation="Vertical">
+                            <CheckBox x:Name="CaptchaCheckBox"
+                                      Content="Use Captcha"
+                                      Margin="5,5,0,5"
+                                      IsChecked="True"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="RuCaptcha Api Key:"
+                                       MinWidth="115"/>
+                                <TextBox x:Name="RuCaptchaApiKey" 
+                                         Width="210" Margin="5"
+                                         Text="74c8f804e64f38df36e5114dd81b247f"
+                                         IsEnabled="{Binding ElementName=CaptchaCheckBox, Path=IsChecked}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="Request Number:"
+                                       MinWidth="115"/>
+                                <xctk:IntegerUpDown x:Name="CaptchaRequest"
+                                                    Margin="5" Width="210"
+                                                    Minimum="1" Maximum="100" Value="50"
+                                                    IsEnabled="{Binding ElementName=CaptchaCheckBox, Path=IsChecked}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="First Wait:"
+                                       MinWidth="115"/>
+                                <xctk:IntegerUpDown x:Name="FirstCaptchaWait"
+                                                    Margin="5" Width="210"
+                                                    Minimum="15" Maximum="60" Value="20"
+                                                    IsEnabled="{Binding ElementName=CaptchaCheckBox, Path=IsChecked}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="Betwen request:"
+                                       MinWidth="115"/>
+                                <xctk:IntegerUpDown x:Name="SecongCaptchaWait"
+                                                    Margin="5" Width="210"
+                                                    Minimum="5" Maximum="30" Value="5"
+                                                    IsEnabled="{Binding ElementName=CaptchaCheckBox, Path=IsChecked}"/>
+
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Help" Visibility="Collapsed">
+                <TextBlock Text="In Progress..." FontSize="36"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
